@@ -241,6 +241,17 @@
         <button type="button" id="passwordSubmit">Открыть</button>
       </div>
       <p class="password-error hidden" id="passwordError">Неверный пароль</p>
+      <button type="button" class="password-forgot" id="passwordForgot">Забыли пароль?</button>
+      <div class="password-hint hidden" id="passwordHint">
+        <p>Пароль хранится только в этом браузере, поэтому подсмотреть его нельзя — но можно задать новый. <b>Контент сайта при этом не пострадает.</b></p>
+        <ol>
+          <li>Нажмите <b>F12</b> и откройте вкладку <b>Console</b> (Консоль).</li>
+          <li>Вставьте туда эту строку и нажмите Enter:</li>
+        </ol>
+        <code class="password-hint__code" id="passwordHintCode">localStorage.setItem("adminPassword","новый-пароль")</code>
+        <button type="button" class="password-hint__copy" id="passwordHintCopy">Скопировать строку</button>
+        <p>Замените <b>новый-пароль</b> на любой свой, обновите страницу — и входите с ним.</p>
+      </div>
     </div>
   </div>
 
@@ -250,6 +261,11 @@
         <h2>Панель администратора</h2>
         <p class="admin-note">Открыть админку: Ctrl+Shift+A или добавьте <code>?admin</code> к URL.</p>
         <button class="admin-close" id="adminClose" aria-label="Закрыть админку">×</button>
+      </div>
+      <div class="admin-dirty hidden" id="adminDirtyBanner" role="status" aria-live="polite">
+        <span class="admin-dirty__icon" aria-hidden="true">!</span>
+        <span class="admin-dirty__text" id="adminDirtyText">Есть изменения, которых ещё нет на сайте — посетители пока видят старую версию. Нажмите «Опубликовать сейчас» или скачайте копию и загрузите её на GitHub.</span>
+        <button type="button" class="admin-dirty__done hidden" id="adminDirtyDone">Я загрузил файл</button>
       </div>
       <form id="adminForm">
         <div class="admin-field admin-lang-top">

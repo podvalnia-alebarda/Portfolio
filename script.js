@@ -1102,6 +1102,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const maxDim = targetId === 'header' ? 1920 : 1400;
     compressImageFile(file, maxDim, 0.84).then((dataUrl) => {
       localStorage.setItem(storageKey, dataUrl);
+      markContentDirty();
       // Update the displayed image
       if (targetId === 'header') {
         heroBgImage.src = dataUrl;
@@ -1142,8 +1143,64 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  /* =====================================================================
+   * ИНДИКАТОР «ЕСТЬ НЕОПУБЛИКОВАННЫЕ ИЗМЕНЕНИЯ»
+   * Правки в админке живут только в localStorage этого браузера. Пока их не
+   * выгрузили в content.json, посетители видят старую версию сайта — это самая
+   * частая причина «у меня всё есть, а на сайте по-старому». Показываем явно.
+   * ===================================================================== */
+  const DIRTY_KEY = 'contentDirty';           // '1' — есть правки, которых нет на сайте
+  const DIRTY_EXPORTED_KEY = 'contentExported'; // '1' — копия скачана, ждём загрузки на GitHub
+
+  function isContentDirty() {
+    try { return localStorage.getItem(DIRTY_KEY) === '1'; } catch (e) { return false; }
+  }
+  function markContentDirty() {
+    try {
+      localStorage.setItem(DIRTY_KEY, '1');
+      localStorage.removeItem(DIRTY_EXPORTED_KEY);
+    } catch (e) {}
+    refreshDirtyIndicator();
+  }
+  function markContentPublished() {
+    try {
+      localStorage.removeItem(DIRTY_KEY);
+      localStorage.removeItem(DIRTY_EXPORTED_KEY);
+    } catch (e) {}
+    refreshDirtyIndicator();
+  }
+  function markContentExported() {
+    try { localStorage.setItem(DIRTY_EXPORTED_KEY, '1'); } catch (e) {}
+    refreshDirtyIndicator();
+  }
+  function refreshDirtyIndicator() {
+    const dirty = isContentDirty();
+    // Точка на плавающей кнопке «A» — видно, не открывая админку
+    if (adminUnlock) adminUnlock.classList.toggle('has-unpublished', dirty);
+    const banner = document.getElementById('adminDirtyBanner');
+    if (!banner) return;
+    banner.classList.toggle('hidden', !dirty);
+    if (!dirty) return;
+    let exported = false;
+    try { exported = localStorage.getItem(DIRTY_EXPORTED_KEY) === '1'; } catch (e) {}
+    const text = document.getElementById('adminDirtyText');
+    const doneBtn = document.getElementById('adminDirtyDone');
+    if (text) {
+      text.textContent = exported
+        ? 'Копия скачана. Осталось загрузить файл content.json на GitHub (рядом с index.html) — потом нажмите кнопку справа.'
+        : 'Есть изменения, которых ещё нет на сайте — посетители пока видят старую версию. Нажмите «Опубликовать сейчас» или скачайте копию и загрузите её на GitHub.';
+    }
+    if (doneBtn) doneBtn.classList.toggle('hidden', !exported);
+  }
+
+  // Правки, набранные в форме, но ещё не сохранённые кнопкой — предупреждаем,
+  // чтобы их случайно не потерять при закрытии вкладки или панели.
+  let adminFormTouched = false;
+
   function populateAdminForm() {
     if (!adminEditLang) adminEditLang = "ru";
+    adminFormTouched = false;
+    refreshDirtyIndicator();
     renderAdminFilterEditor();
     renderAdminGalleryFilterSelectors();
     renderAdminGalleryList();
@@ -1256,6 +1313,8 @@ document.addEventListener("DOMContentLoaded", function () {
     applyTranslations();
     renderSocialLinks();
     renderProjectsFeed();
+    adminFormTouched = false;
+    markContentDirty();
     if (closePanel) {
       closeAdminPanel();
     } else {
@@ -1490,6 +1549,31 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (e) { return []; }
   }
 
+  // Подгружаем крупные картинки только когда посетитель до них доскроллил.
+  // Листы прайса весят сотни килобайт — тянуть их сразу при открытии сайта незачем.
+  const lazyImageObserver = ('IntersectionObserver' in window)
+    ? new IntersectionObserver((entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const img = entry.target;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            delete img.dataset.src;
+          }
+          obs.unobserve(img);
+        });
+      }, { rootMargin: '400px 0px' })
+    : null;
+
+  function lazyLoadImage(img, src) {
+    if (lazyImageObserver) {
+      img.dataset.src = src;
+      lazyImageObserver.observe(img);
+    } else {
+      img.src = src; // старый браузер — грузим сразу
+    }
+  }
+
   // Публичный рендер примеров (по 2 в ряд, без обрезки; клик — просмотр в lightbox)
   function renderSectionImages(container, key) {
     if (!container) return;
@@ -1502,9 +1586,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const item = document.createElement('div');
       item.className = 'commission-item';
       const img = document.createElement('img');
-      img.src = it.image;
+      lazyLoadImage(img, it.image);
       img.alt = it.alt || '';
       img.loading = 'lazy';
+      img.decoding = 'async';
       img.draggable = false;
       item.appendChild(img);
       const guard = document.createElement('div');
@@ -1538,6 +1623,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const arr = loadSectionImages(key);
         arr.splice(idx, 1);
         localStorage.setItem(key, JSON.stringify(arr));
+        markContentDirty();
         renderAdminSectionImagesAll();
         renderSectionImagesPublic();
       });
@@ -2064,7 +2150,14 @@ document.addEventListener("DOMContentLoaded", function () {
     renderSocialLinks();
     renderProjectsFeed();
     renderSectionImagesPublic();
-    if (repopulateAdmin) populateAdminForm();
+    if (repopulateAdmin) {
+      // Загрузка копии из файла — это новые правки, которых ещё нет на сайте
+      markContentDirty();
+      populateAdminForm();
+    } else {
+      // Применили то, что реально опубликовано — значит расхождения нет
+      markContentPublished();
+    }
     return true;
   }
 
@@ -2081,6 +2174,7 @@ document.addEventListener("DOMContentLoaded", function () {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    markContentExported();
   }
 
   function handleImportFile(event) {
@@ -2176,6 +2270,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const putRes = await fetch(apiBase, { method: 'PUT', headers, body: JSON.stringify(body) });
       if (putRes.ok) {
         setPublishStatus('Опубликовано! Сайт обновится у всех за 1–2 минуты.', 'success');
+        markContentPublished();
       } else {
         const err = await putRes.json().catch(() => ({}));
         setPublishStatus('Ошибка GitHub (' + putRes.status + '): ' + (err.message || 'см. консоль'), 'error');
@@ -2197,6 +2292,13 @@ document.addEventListener("DOMContentLoaded", function () {
       // Посетители (без токена) всегда видят свежий опубликованный контент.
       const gh = loadGhConfig();
       if (gh && gh.token) return false;
+      // Если в этом браузере есть правки, которых ещё нет на сайте, — не затираем их
+      // опубликованной версией. Иначе перезагрузка страницы молча уничтожала бы
+      // несохранённую работу того, кто публикует вручную (без токена).
+      if (isContentDirty()) {
+        refreshDirtyIndicator();
+        return false;
+      }
       // относительный путь — рядом с index.html в том же репозитории
       const res = await fetch('content.json?ts=' + (window.__cacheBust || ''), { cache: 'no-store' });
       if (!res.ok) return false;
@@ -2608,6 +2710,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (arr.length >= 6) { alert('Можно добавить максимум 6 изображений.'); resetInput(); return; }
         arr.push({ image: dataUrl, alt: file.name });
         localStorage.setItem(storageKey, JSON.stringify(arr));
+        markContentDirty();
         resetInput();
         renderAdminSectionImagesAll();
         renderSectionImagesPublic();
@@ -3020,7 +3123,66 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   if (adminClose) {
-    adminClose.addEventListener("click", closeAdminPanel);
+    adminClose.addEventListener("click", () => {
+      if (adminFormTouched &&
+          !confirm('Вы что-то изменили, но не нажали «Применить» или «Сохранить и закрыть».\nЗакрыть панель и потерять эти правки?')) {
+        return;
+      }
+      adminFormTouched = false;
+      closeAdminPanel();
+    });
+  }
+
+  // Отмечаем, что в форме что-то правили, но ещё не сохранили
+  const adminFormEl = document.getElementById('adminForm');
+  if (adminFormEl) {
+    adminFormEl.addEventListener('input', () => { adminFormTouched = true; });
+    adminFormEl.addEventListener('change', () => { adminFormTouched = true; });
+  }
+
+  // Предупреждение при закрытии вкладки с несохранёнными правками админки
+  window.addEventListener('beforeunload', (ev) => {
+    const panelOpen = adminPanel && !adminPanel.classList.contains('hidden');
+    if (panelOpen && adminFormTouched) {
+      ev.preventDefault();
+      ev.returnValue = '';
+      return '';
+    }
+  });
+
+  // «Я загрузил файл» — снимаем напоминание после ручной выгрузки на GitHub
+  const adminDirtyDone = document.getElementById('adminDirtyDone');
+  if (adminDirtyDone) {
+    adminDirtyDone.addEventListener('click', markContentPublished);
+  }
+
+  // «Забыли пароль?» — показать инструкцию по сбросу
+  const passwordForgot = document.getElementById('passwordForgot');
+  const passwordHint = document.getElementById('passwordHint');
+  if (passwordForgot && passwordHint) {
+    passwordForgot.addEventListener('click', () => {
+      passwordHint.classList.toggle('hidden');
+      passwordForgot.textContent = passwordHint.classList.contains('hidden')
+        ? 'Забыли пароль?'
+        : 'Скрыть подсказку';
+    });
+  }
+  const passwordHintCopy = document.getElementById('passwordHintCopy');
+  if (passwordHintCopy) {
+    passwordHintCopy.addEventListener('click', () => {
+      const code = document.getElementById('passwordHintCode');
+      if (!code) return;
+      const done = () => {
+        passwordHintCopy.textContent = 'Скопировано!';
+        setTimeout(() => { passwordHintCopy.textContent = 'Скопировать строку'; }, 1800);
+      };
+      const text = code.textContent || '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopyText(text, done));
+      } else {
+        fallbackCopyText(text, done);
+      }
+    });
   }
 
   // «Сохранить и закрыть» — сохраняет и закрывает панель
@@ -3051,6 +3213,7 @@ document.addEventListener("DOMContentLoaded", function () {
       applyTranslations();
       renderSocialLinks();
       renderProjectsFeed();
+      markContentDirty();
       populateAdminForm();
     });
   }

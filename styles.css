@@ -2934,3 +2934,115 @@ main {
   }
 }
 
+
+/* =====================================================================
+ * Баннер «есть неопубликованные изменения» в админке
+ * ===================================================================== */
+.admin-dirty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--c-orange);
+  background: #fff6e0;
+  color: #6b3d05;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.admin-dirty.hidden { display: none; }
+.admin-dirty__icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--c-orange);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.admin-dirty__text { flex: 1 1 220px; }
+.admin-dirty__done {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--c-brown);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-dirty__done.hidden { display: none; }
+.admin-dirty__done:hover { background: var(--c-brick); }
+
+/* Точка на плавающей кнопке «A», когда есть неопубликованные изменения */
+.admin-unlock.has-unpublished::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--c-brick);
+  border: 2px solid #fff;
+}
+
+/* =====================================================================
+ * «Забыли пароль?» — подсказка по сбросу
+ * ===================================================================== */
+.password-forgot {
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.password-forgot:hover { color: var(--accent); }
+.password-hint {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(81, 50, 21, 0.06);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: left;
+}
+.password-hint.hidden { display: none; }
+.password-hint p { margin: 0 0 8px; }
+.password-hint p:last-child { margin-bottom: 0; }
+.password-hint ol { margin: 0 0 8px; padding-left: 20px; }
+.password-hint__code {
+  display: block;
+  margin: 0 0 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #2f1d0c;
+  color: #ffd9a0;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 0.82rem;
+  word-break: break-all;
+  user-select: all;
+}
+.password-hint__copy {
+  margin: 0 0 10px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--c-brown);
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.password-hint__copy:hover { background: var(--c-brick); }
