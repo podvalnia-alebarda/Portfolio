@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Podvalnia_alebarda — диджитал-художник и аниматор. Галерея работ, заказ коммишек, сотрудничество." />
+  <meta name="theme-color" content="#f5c56a" />
+  <title>Podvalnia_alebarda | Диджитал художник</title>
+
+  <!-- Шрифты: display (Unbounded) + текст (Manrope) + рукописный акцент (Caveat). Все с кириллицей.
+       CJK/корейский подгружается лениво в setLanguage() при выборе zh/ko.
+       Оставлены только реально используемые начертания; display=swap — текст виден сразу. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Шрифты грузятся НЕблокирующе (media=print→all): текст виден сразу (display=swap),
+       а отрисовка страницы не ждёт загрузки шрифтов. -->
+  <link rel="stylesheet" media="print" onload="this.media='all'"
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;700;800&family=Unbounded:wght@700;800&display=swap" />
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Manrope:wght@400;600;700;800&family=Unbounded:wght@700;800&display=swap" />
+  </noscript>
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Применяем тему до отрисовки. По умолчанию — светлая тёплая палитра (как в прошлой
+       версии сайта); системная тёмная НЕ навязывается. Тёмную можно включить кнопкой. -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("siteTheme");
+        var theme = saved === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="page-layout">
+    <div class="side-panel side-panel--left" aria-hidden="true">
+      <img src="Полосы.JPG" alt="" class="side-panel-image" loading="lazy" decoding="async" />
+    </div>
+    <div class="page-shell">
+      <header class="hero-section">
+        <img src="IMG_1858.PNG" alt="Обновлённая шапка" class="hero-bg-image" fetchpriority="high" decoding="async" />
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="bird" aria-hidden="true"></div>
+          <nav class="hero-nav" aria-label="Основные разделы">
+            <a href="#order" class="nav-button" data-i18n="nav_order">заказать коммишку</a>
+            <a href="#projects" class="nav-button" data-i18n="nav_projects">мои проекты</a>
+            <a href="#collab" class="nav-button" data-i18n="nav_collab">предложить сотрудничество</a>
+            <a href="#about" class="nav-button" data-i18n="nav_about">обо мне</a>
+            <a href="#discounts" class="nav-button" data-i18n="nav_discounts">скидки</a>
+            <a href="#socials" class="nav-button" data-i18n="nav_socials">мои соцсети</a>
+          </nav>
+
+          <div class="hero-utility">
+            <div class="lang-switcher" id="langSwitcher">
+              <button type="button" id="langToggle" class="ghost-button lang-switcher__btn" aria-haspopup="listbox" aria-expanded="false">
+                <span id="langCurrent">RU</span>
+                <span class="lang-switcher__caret" aria-hidden="true">▾</span>
+              </button>
+              <ul class="lang-switcher__menu hidden" id="langMenu" role="listbox" aria-label="Выбор языка">
+                <li role="option" data-lang="ru">Русский</li>
+                <li role="option" data-lang="en">English</li>
+                <li role="option" data-lang="zh">中文</li>
+                <li role="option" data-lang="es">Español</li>
+                <li role="option" data-lang="ko">한국어</li>
+              </ul>
+            </div>
+
+            <button type="button" id="themeToggle" class="theme-toggle" aria-label="Переключить тему" title="Светлая / тёмная тема">
+              <span class="theme-toggle__icon" aria-hidden="true"></span>
+            </button>
+          </div>
+
+          <div class="hero-title-wrap">
+            <h1 class="hero-title" data-i18n="hero_title">Podvalnia_alebarda</h1>
+            <p class="hero-subtitle" data-i18n="hero_subtitle">didgital художник и аниматор.</p>
+          </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="gallery-section" id="gallery">
+        <div class="gallery-intro">
+          <div class="gallery-header">
+            <h2 data-i18n="gallery_title">Галерея работ</h2>
+            <p data-i18n="gallery_description">Работы фильтруются по стилю и настроению. В будущем здесь появятся настоящие картины.</p>
+          </div>
+          <div class="filter-groups">
+            <div class="filter-row filter-row--primary" id="filterRow"></div>
+            <div class="filter-row filter-row--secondary" id="filterRowSecondary"></div>
+            <div class="filter-toolbar" id="filterToolbar">
+              <div class="filter-mode" role="group" aria-label="Режим совпадения тегов">
+                <span class="filter-mode__label" data-i18n="filter_mode_label">Совпадение:</span>
+                <button type="button" class="filter-mode__btn active" data-mode="any" data-i18n="filter_mode_any" aria-pressed="true">любой</button>
+                <button type="button" class="filter-mode__btn" data-mode="all" data-i18n="filter_mode_all" aria-pressed="false">все</button>
+              </div>
+              <span class="filter-count" id="filterCount" aria-live="polite"></span>
+              <button type="button" class="filter-clear hidden" id="filterClear" data-i18n="filter_clear">Сбросить фильтры</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="floating-gallery" aria-label="Плавающая галерея работ"></div>
+      </section>
+
+      <section class="info-section" id="order">
+        <div class="info-card info-card--order">
+          <h2 data-i18n="order_title">Заказать коммишку</h2>
+          <p data-i18n="order_p1">Опишите идею, настроение и формат — я превращу её в тёплое цифровое произведение с цветочными и листовыми мотивами.</p>
+
+          <!-- Прайс: картинки НАД текстом, крупные и без обрезки, по 2 в ряд -->
+          <div class="section-examples">
+            <p class="section-examples__title" data-i18n="order_images_title">Прайс</p>
+            <div class="commission-gallery" id="orderGallery" aria-label="Прайс"></div>
+          </div>
+
+          <p class="section-midtext" data-i18n="order_p2">Напишите свои пожелания, и я предложу лучший вариант исполнения.</p>
+
+          <!-- Шаблон заявки: копируется одной кнопкой, заполняется и отправляется мне в ЛС -->
+          <div class="section-template">
+            <pre class="copy-template" id="orderTemplate" data-i18n="order_template" aria-label="Шаблон заявки на коммишку"></pre>
+            <button type="button" class="cta-button copy-template-btn" id="orderCopyBtn" data-i18n="copy_template_btn">Скопировать шаблон</button>
+            <span class="copy-template-status" id="orderCopyStatus" role="status" aria-live="polite"></span>
+          </div>
+
+          <!-- Контакты для личных сообщений -->
+          <div class="section-contact">
+            <p class="section-contact__title" data-i18n="contact_dm_title">Напишите мне в личные сообщения:</p>
+            <div class="section-contact__links" id="orderContactLinks"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-section" id="projects">
+        <div class="info-card info-card--projects">
+          <h2 data-i18n="projects_title">Мои проекты</h2>
+          <p data-i18n="projects_description">Здесь я рассказываю о проектах, в которых участвовал, и о том, над чем работал.</p>
+          <div class="projects-feed" id="projectsFeed" aria-label="Лента проектов"></div>
+        </div>
+      </section>
+
+      <section class="info-section" id="collab">
+        <div class="info-card info-card--collab info-card--order">
+          <h2 data-i18n="collab_title">Предложить сотрудничество</h2>
+          <p data-i18n="collab_p1">Ищу проекты, где можно добавить лёгкую магию с помощью диджитал-арта. Буду рада сделать работу для бренда, игры, издательства или кампании.</p>
+          <!-- Карта сотрудничества: картинки НАД текстом, по 2 в ряд, без обрезки -->
+          <div class="section-examples">
+            <p class="section-examples__title" data-i18n="collab_images_title">Карта сотрудничества</p>
+            <div class="commission-gallery" id="collabGallery" aria-label="Карта сотрудничества"></div>
+          </div>
+
+          <p class="section-midtext" data-i18n="collab_p2">Оставь запрос, и я отвечу с предварительной идеей и примерными сроками.</p>
+
+          <div class="section-template">
+            <pre class="copy-template" id="collabTemplate" data-i18n="collab_template" aria-label="Шаблон предложения о сотрудничестве"></pre>
+            <button type="button" class="cta-button copy-template-btn" id="collabCopyBtn" data-i18n="copy_template_btn">Скопировать шаблон</button>
+            <span class="copy-template-status" id="collabCopyStatus" role="status" aria-live="polite"></span>
+          </div>
+
+          <!-- Контакты для личных сообщений -->
+          <div class="section-contact">
+            <p class="section-contact__title" data-i18n="contact_dm_title">Напишите мне в личные сообщения:</p>
+            <div class="section-contact__links" id="collabContactLinks"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-section" id="about">
+        <div class="info-card info-card--about">
+          <h2 data-i18n="about_title">Обо мне</h2>
+          <p data-i18n="about_p1">Я обычный студент из Санкт-Петербурга, мечтающий зарабатывать на своем творчестве. Являюсь самоучкой и рисую всю свою жизнь, во многом обязавшись уровнем бабушке — художнице и писательнице.</p>
+          <ul>
+            <li data-i18n="about_li1">Люблю лыжный спорт, макароны и лапшу.</li>
+            <li data-i18n="about_li2">Фанат Декстера, Шерлока от BBC и разных фэнтези по типу Властелина колец.</li>
+            <li data-i18n="about_li3">Хочу создавать тёплые работы, где можно увидеть атмосферу и характер.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="info-section" id="discounts">
+        <div class="info-card info-card--discounts">
+          <h2 data-i18n="discounts_title">Скидки</h2>
+          <p data-i18n="discounts_text">Здесь появляются актуальные скидки на мои работы — следите за обновлениями.</p>
+          <div class="discounts-grid" id="discountsGrid" aria-label="Текущие скидки"></div>
+        </div>
+      </section>
+    </main>
+
+      <!-- Портфолио коллеги — отдельным блоком (над соцсетями) -->
+      <section class="colleague-section" aria-label="Портфолио коллеги">
+        <div class="footer-colleague">
+          <p class="footer-colleague__text" data-i18n="colleague_text">Также вы можете ознакомиться с портфолио моего коллеги и тоже что-нибудь у него заказать:</p>
+          <a id="colleagueBtn" href="https://9726303-blip.github.io/Kreatur_Herre/" class="cta-button footer-colleague__btn" target="_blank" rel="noopener noreferrer" data-i18n="colleague_btn">Портфолио коллеги</a>
+        </div>
+      </section>
+
+      <footer class="site-footer" id="socials" aria-label="Контакты и социальные сети">
+        <div class="footer-shell">
+          <p class="footer-title" data-i18n="footer_title">Следуй за мной в соцсетях</p>
+          <div class="social-links">
+            <a href="#" class="social-button" data-i18n="social_instagram">Instagram</a>
+            <a href="#" class="social-button" data-i18n="social_telegram">Telegram</a>
+            <a href="#" class="social-button" data-i18n="social_vk">VK</a>
+          </div>
+          <p class="footer-copyright" id="footerCopyright" data-i18n="footer_copyright">© Podvalnia_alebarda. Все работы защищены авторским правом. Копирование запрещено.</p>
+        </div>
+      </footer>
+    </div>
+    <div class="side-panel side-panel--right" aria-hidden="true">
+      <img src="Полосы.JPG" alt="" class="side-panel-image" loading="lazy" decoding="async" />
+    </div>
+  </div>
+
+  <button id="adminUnlock" class="admin-unlock" aria-label="Open admin">A</button>
+
+  <div class="language-modal hidden" id="languageModal" role="dialog" aria-modal="true">
+    <div class="language-modal__panel">
+      <p class="language-modal__prompt">Выберите свой язык / Choose your language</p>
+      <div class="language-options">
+        <button class="language-button" data-lang="ru">Русский</button>
+        <button class="language-button" data-lang="en">English</button>
+        <button class="language-button" data-lang="es">Español</button>
+        <button class="language-button" data-lang="zh">中文</button>
+        <button class="language-button" data-lang="ko">한국어</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="password-modal hidden" id="passwordModal" role="dialog" aria-modal="true">
+    <div class="password-modal__panel">
+      <label for="adminPasswordInput">Введите пароль администратора</label>
+      <input id="adminPasswordInput" type="password" />
+      <div class="password-actions">
+        <button type="button" id="passwordCancel">Отмена</button>
+        <button type="button" id="passwordSubmit">Открыть</button>
+      </div>
+      <p class="password-error hidden" id="passwordError">Неверный пароль</p>
+    </div>
+  </div>
+
+  <div class="admin-modal hidden" id="adminPanel" role="dialog" aria-modal="true">
+    <div class="admin-modal__panel">
+      <div class="admin-modal__header">
+        <h2>Панель администратора</h2>
+        <p class="admin-note">Открыть админку: Ctrl+Shift+A или добавьте <code>?admin</code> к URL.</p>
+        <button class="admin-close" id="adminClose" aria-label="Закрыть админку">×</button>
+      </div>
+      <form id="adminForm">
+        <div class="admin-field admin-lang-top">
+          <label for="adminTextLang">🌐 Язык, который сейчас редактирую</label>
+          <select id="adminTextLang">
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="zh">中文</option>
+            <option value="ko">한국어</option>
+          </select>
+          <p class="admin-help">Выберите язык один раз — он применяется ко всему редактированию текста и подписям постов ниже. По умолчанию — русский.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Редактирование изображений</label>
+          <div class="admin-image-section">
+            <div class="admin-image-row">
+              <label for="adminHeaderImageInput">Шапка сайта</label>
+              <button type="button" id="adminHeaderImageBtn" class="admin-button">Загрузить шапку</button>
+              <input id="adminHeaderImageInput" type="file" accept="image/*" class="hidden" />
+              <div id="adminHeaderImagePreview" class="admin-image-preview"></div>
+            </div>
+            <div class="admin-image-row">
+              <label for="adminLeftSidebarImageInput">Левая полоса</label>
+              <button type="button" id="adminLeftSidebarImageBtn" class="admin-button">Загрузить полосу</button>
+              <input id="adminLeftSidebarImageInput" type="file" accept="image/*" class="hidden" />
+              <div id="adminLeftSidebarImagePreview" class="admin-image-preview"></div>
+            </div>
+            <div class="admin-image-row">
+              <label for="adminRightSidebarImageInput">Правая полоса</label>
+              <button type="button" id="adminRightSidebarImageBtn" class="admin-button">Загрузить полосу</button>
+              <input id="adminRightSidebarImageInput" type="file" accept="image/*" class="hidden" />
+              <div id="adminRightSidebarImagePreview" class="admin-image-preview"></div>
+            </div>
+          </div>
+          <p class="admin-help">Загружайте изображения для шапки и полос. Они автоматически обрезаются под размеры.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Фильтры галереи</label>
+          <div id="adminFilterEditor" class="admin-filter-editor"></div>
+          <div class="admin-filter-actions">
+            <button type="button" id="adminAddPrimaryFilter" class="admin-button">Добавить большой фильтр</button>
+            <button type="button" id="adminAddSecondaryFilter" class="admin-button admin-button--secondary">Добавить малый фильтр</button>
+          </div>
+          <p class="admin-help">Каждый фильтр — карточка с названием СРАЗУ на всех языках (русский, English, Español, 中文, 한국어). Большие фильтры идут в первой строке галереи, малые — во второй. «Добавить…» создаёт новую карточку: впишите названия и нажмите «Применить» или «Сохранить». Переключать язык вверху панели для этого НЕ нужно.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Редактирование галереи</label>
+          <div id="adminGalleryList" class="admin-gallery-list"></div>
+          <div id="adminGalleryFilterSelectors" class="admin-gallery-filters"></div>
+          <button type="button" id="adminAddGalleryItem" class="admin-button">Добавить работу</button>
+          <p class="admin-help">Выберите фильтры для новой работы, затем нажмите кнопку, чтобы выбрать файл и добавить изображение.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Мои проекты (посты)</label>
+          <div id="adminProjectsList" class="admin-projects-list"></div>
+          <button type="button" id="adminAddProject" class="admin-button">Добавить пост</button>
+          <p class="admin-help">Каждый пост — картинка, подпись и дата. Подпись можно задавать на каждом языке отдельно (язык выбирается ниже, в разделе «Редактирование текста»). Дата ставится вручную.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Скидки</label>
+          <div id="adminDiscountsList" class="admin-discounts-list"></div>
+          <button type="button" id="adminAddDiscount" class="admin-button">Добавить скидку</button>
+          <p class="admin-help">Каждая скидка — большая цифра в процентах, подпись и маленькая картинка. Подпись задаётся на каждом языке отдельно (язык выбирается в «Редактирование текста»). Сохраняется при «Применить»/«Сохранить».</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Редактирование текста</label>
+          <div id="adminTextList" class="admin-text-list"></div>
+          <p class="admin-help">Текст редактируется для языка, выбранного вверху панели. Сохраняется отдельно для каждого языка. Если поле пустое — показывается стандартный текст.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Социальные сети (подвал сайта)</label>
+          <div id="adminSocialLinks" class="admin-social-links"></div>
+          <button type="button" id="adminAddSocial" class="admin-button admin-social-add">Добавить соцсеть</button>
+          <p class="admin-help">Меняйте название и ссылку для кнопок соцсетей в подвале. Можно добавить до 10 кнопок: «Добавить соцсеть» создаёт новую ячейку, «Удалить» убирает. Не забудьте «Применить» или «Сохранить».</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Контакты для личных сообщений (под блоками «Заказать»/«Сотрудничество»)</label>
+          <div class="admin-contact-links">
+            <label class="admin-contact-row"><span>Discord</span><input id="adminContactDiscord" type="text" placeholder="Ссылка на Discord (https://…)" autocomplete="off" /></label>
+            <label class="admin-contact-row"><span>VK</span><input id="adminContactVk" type="text" placeholder="Ссылка на VK (https://…)" autocomplete="off" /></label>
+            <label class="admin-contact-row"><span>Telegram</span><input id="adminContactTelegram" type="text" placeholder="Ссылка на Telegram (https://…)" autocomplete="off" /></label>
+          </div>
+          <p class="admin-help">Эти ссылки показываются жирной строкой «Напишите мне в личные сообщения:» внизу блоков «Заказать» и «Сотрудничество». Пустые поля просто не показываются. Вставляйте ссылку как обычно (Ctrl+V или долгий тап → «Вставить»).</p>
+        </div>
+
+        <div class="admin-field">
+          <label for="adminColleagueUrl">Ссылка на портфолио коллеги</label>
+          <input id="adminColleagueUrl" type="text" placeholder="https://… (пусто — скрыть блок коллеги)" autocomplete="off" />
+          <p class="admin-help">Адрес кнопки «Портфолио коллеги» (блок над соцсетями). Текст и подпись кнопки меняются в «Редактирование текста» → «Футер». Очистите поле, чтобы скрыть весь блок коллеги.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Защита контента</label>
+          <label class="admin-checkbox-row">
+            <input id="adminWatermarkEnabled" type="checkbox" />
+            <span>Водяной знак на работах в галерее</span>
+          </label>
+          <input id="adminWatermarkText" type="text" placeholder="Текст водяного знака (по умолчанию — ник)" autocomplete="off" />
+          <p class="admin-help">Полупрозрачный текст поверх каждой работы. Базовая защита (запрет правого клика, перетаскивания, выделения, горячих клавиш) включена всегда. Помните: на статическом сайте нельзя на 100% запретить скачивание — это лишь затрудняет копирование.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Примеры работ в блоке «Заказать» (до 6)</label>
+          <div id="adminOrderImagesList" class="admin-section-images"></div>
+          <button type="button" id="adminAddOrderImage" class="admin-button">Добавить изображение</button>
+          <p class="admin-help">Крупные изображения-примеры в блоке «Заказать коммишку» — показываются по 2 в ряд и НЕ обрезаются. До 6 штук. Сохраняются сразу. Изображения автоматически сжимаются, чтобы не перегружать сайт.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Примеры работ в блоке «Сотрудничество» (до 6)</label>
+          <div id="adminCollabImagesList" class="admin-section-images"></div>
+          <button type="button" id="adminAddCollabImage" class="admin-button">Добавить изображение</button>
+          <p class="admin-help">Крупные изображения-примеры в блоке «Предложить сотрудничество» — по 2 в ряд, без обрезки. До 6 штук. Сохраняются сразу.</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Опубликовать на сайт (для всех устройств)</label>
+          <div class="admin-publish">
+            <input id="adminGhOwner" type="text" placeholder="GitHub: владелец (напр. 9726303-blip)" autocomplete="off" />
+            <input id="adminGhRepo" type="text" placeholder="Репозиторий (напр. Portfolio)" autocomplete="off" />
+            <input id="adminGhBranch" type="text" placeholder="Ветка (обычно main)" autocomplete="off" />
+            <input id="adminGhToken" type="password" placeholder="GitHub-токен (хранится только тут)" autocomplete="off" />
+          </div>
+          <div class="admin-io-actions">
+            <button type="button" id="adminPublish" class="admin-button">Опубликовать сейчас</button>
+            <span id="adminPublishStatus" class="admin-publish-status" aria-live="polite"></span>
+          </div>
+          <p class="admin-help">Нажмите «Опубликовать сейчас» — весь контент (галерея, проекты, тексты, соцсети) выгрузится на GitHub в файл <code>content.json</code>, и сайт обновится для ВСЕХ за 1–2 минуты. Токен вводится один раз, хранится только в этом браузере и не попадает на сайт. Как создать токен — в инструкции (нужны права «Contents: write» для этого репозитория).</p>
+        </div>
+
+        <div class="admin-field">
+          <label>Резервная копия контента (файл)</label>
+          <div class="admin-io-actions">
+            <button type="button" id="adminExport" class="admin-button admin-button--secondary">Скачать копию</button>
+            <button type="button" id="adminImport" class="admin-button admin-button--secondary">Загрузить копию</button>
+            <input id="adminImportInput" type="file" accept="application/json,.json" class="hidden" />
+          </div>
+          <p class="admin-help">«Скачать копию» — сохранить весь контент в файл <code>content.json</code> на устройство (резерв или ручная заливка). «Загрузить копию» — вернуть контент из такого файла в админку.</p>
+        </div>
+
+        <div class="admin-field">
+          <label for="adminNewPassword">Сменить пароль администратора</label>
+          <input id="adminNewPassword" type="password" placeholder="Новый пароль" />
+          <input id="adminConfirmPassword" type="password" placeholder="Повторите новый пароль" />
+          <p class="admin-help">Оставьте пустым, чтобы не менять текущий пароль.</p>
+        </div>
+        <div class="admin-actions">
+          <button type="button" id="adminApply" class="admin-button">Применить (предпросмотр)</button>
+          <button type="button" id="adminSave" class="admin-button">Сохранить и закрыть</button>
+          <button type="button" id="adminReset" class="admin-button admin-button--secondary">Сбросить всё</button>
+        </div>
+        <p class="admin-help" style="margin-top:4px">«Применить» — показать изменения на странице, не закрывая админку (для предпросмотра). «Сохранить и закрыть» — сохранить и закрыть панель. «Сбросить всё» — вернуть стандартный контент.</p>
+      </form>
+    </div>
+  </div>
+
+  <input id="adminGalleryFileInput" type="file" accept="image/*" class="hidden" />
+
+  <!-- Просмотр работы в полном размере (lightbox) -->
+  <div class="lightbox hidden" id="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр работы">
+    <button type="button" class="lightbox__close" id="lightboxClose" aria-label="Закрыть">×</button>
+    <div class="lightbox__stage">
+      <img id="lightboxImage" alt="" draggable="false" />
+      <div class="lightbox__watermark" id="lightboxWatermark" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- Уведомление о защите авторских прав -->
+  <div class="copy-toast" id="copyToast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

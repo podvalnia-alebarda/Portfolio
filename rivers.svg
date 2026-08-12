@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" preserveAspectRatio="xMidYMid slice" fill="none" stroke="url(#riverGrad)" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <!-- Сверху оранжевый → к низу жёлтый -->
+    <linearGradient id="riverGrad" gradientUnits="userSpaceOnUse" x1="600" y1="0" x2="600" y2="1200">
+      <stop offset="0" stop-color="#e98e0c"/>
+      <stop offset="0.5" stop-color="#efa713"/>
+      <stop offset="1" stop-color="#f4d51b"/>
+    </linearGradient>
+  </defs>
+  <!-- Главные «реки» — плавные ритмичные меандры (синусоида), извиваются эстетично -->
+  <g stroke-width="21" stroke-opacity="0.82">
+    <path d="M280 -80 C440 60 440 220 280 340 S120 560 280 680 S440 900 280 1020 S120 1240 280 1360"/>
+    <path d="M900 -80 C740 60 740 220 900 340 S1060 560 900 680 S740 900 900 1020 S1060 1240 900 1360"/>
+    <path d="M600 -90 C800 120 800 380 600 540 S400 800 600 980 S800 1250 600 1430"/>
+  </g>
+  <!-- Притоки — мягко ответвляются и снова уходят в поток -->
+  <g stroke-width="12" stroke-opacity="0.58">
+    <path d="M280 340 C190 380 150 480 200 580"/>
+    <path d="M900 340 C990 380 1030 480 980 580"/>
+    <path d="M600 540 C510 590 470 700 530 810"/>
+    <path d="M280 1020 C380 1052 452 1132 420 1240"/>
+    <path d="M900 680 C800 712 720 690 638 742"/>
+  </g>
+  <!-- Тонкие изящные детали -->
+  <g stroke-width="7" stroke-opacity="0.4">
+    <path d="M200 580 C284 622 362 592 432 632"/>
+    <path d="M980 580 C900 622 820 600 742 640"/>
+    <path d="M530 810 C460 842 400 822 338 852"/>
+    <path d="M638 742 C720 770 800 742 884 772"/>
+  </g>
+</svg>
