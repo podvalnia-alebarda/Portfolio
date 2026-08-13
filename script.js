@@ -129,6 +129,15 @@ document.addEventListener("DOMContentLoaded", function () {
       ],
     },
     {
+      section: "Статус приёма заказов",
+      fields: [
+        { key: "order_status_open", label: "Надпись, когда приём ОТКРЫТ" },
+        { key: "order_status_closed", label: "Надпись, когда приём ЗАКРЫТ" },
+        { key: "order_slots_text", label: "Строка про слоты (напр. «свободно 2 из 5»). Пусто — не показывать" },
+        { key: "order_wip_text", label: "Строка «сейчас в работе». Пусто — не показывать" },
+      ],
+    },
+    {
       section: "Скидки",
       fields: [
         { key: "discounts_title", label: "Заголовок раздела" },
@@ -246,6 +255,12 @@ document.addEventListener("DOMContentLoaded", function () {
       filter_pixel: "Пиксель‑арт",
       filter_fantasy: "Фэнтези",
       filter_portrait: "Портреты",
+      order_status_open: "Приём заказов открыт",
+      order_status_closed: "Приём заказов закрыт",
+      order_slots_text: "",
+      order_wip_text: "",
+      share_btn: "Поделиться",
+      share_done: "Ссылка скопирована!",
       order_title: "Заказать коммишку",
       order_p1: "Опишите идею, настроение и формат — я превращу её в тёплое цифровое произведение с цветочными и листовыми мотивами.",
       order_p2: "Напишите свои пожелания, и я предложу лучший вариант исполнения.",
@@ -318,6 +333,12 @@ document.addEventListener("DOMContentLoaded", function () {
       filter_pixel: "Pixel art",
       filter_fantasy: "Fantasy",
       filter_portrait: "Portraits",
+      order_status_open: "Commissions are open",
+      order_status_closed: "Commissions are closed",
+      order_slots_text: "",
+      order_wip_text: "",
+      share_btn: "Share",
+      share_done: "Link copied!",
       order_title: "Commission an artwork",
       order_p1: "Describe the idea, mood and format — I'll turn it into a warm digital piece with floral and foliage motifs.",
       order_p2: "Share your preferences and I'll propose the best approach.",
@@ -390,6 +411,12 @@ document.addEventListener("DOMContentLoaded", function () {
       filter_pixel: "픽셀 아트",
       filter_fantasy: "판타지",
       filter_portrait: "초상화",
+      order_status_open: "커미션 오픈",
+      order_status_closed: "커미션 마감",
+      order_slots_text: "",
+      order_wip_text: "",
+      share_btn: "공유하기",
+      share_done: "링크가 복사되었습니다!",
       order_title: "커미션 의뢰",
       order_p1: "아이디어, 분위기, 형식을 알려주시면 꽃과 잎사귀 모티프가 있는 따뜻한 디지털 작품으로 만들어 드립니다.",
       order_p2: "원하시는 사항을 적어주시면 최적의 진행 방안을 제안하겠습니다.",
@@ -462,6 +489,12 @@ document.addEventListener("DOMContentLoaded", function () {
       filter_pixel: "Pixel art",
       filter_fantasy: "Fantasía",
       filter_portrait: "Retratos",
+      order_status_open: "Comisiones abiertas",
+      order_status_closed: "Comisiones cerradas",
+      order_slots_text: "",
+      order_wip_text: "",
+      share_btn: "Compartir",
+      share_done: "¡Enlace copiado!",
       order_title: "Pedir una comisión",
       order_p1: "Describe la idea, el estado de ánimo y el formato: lo convertiré en una pieza digital cálida con motivos florales y hojas.",
       order_p2: "Comparte tus preferencias y propondré la mejor forma de realizarlo.",
@@ -534,6 +567,12 @@ document.addEventListener("DOMContentLoaded", function () {
       filter_pixel: "像素艺术",
       filter_fantasy: "奇幻",
       filter_portrait: "肖像",
+      order_status_open: "约稿开放中",
+      order_status_closed: "约稿已关闭",
+      order_slots_text: "",
+      order_wip_text: "",
+      share_btn: "分享",
+      share_done: "链接已复制！",
       order_title: "委托创作",
       order_p1: "描述想法、氛围和格式——我会把它变成带有花卉和叶片元素的温暖数字作品.",
       order_p2: "写下你的偏好，我会提出最佳实现方式.",
@@ -842,7 +881,17 @@ document.addEventListener("DOMContentLoaded", function () {
         // а по обычному клику открывает полноразмерный просмотр (lightbox).
         const guard = document.createElement("div");
         guard.className = "art-guard";
-        guard.addEventListener("click", () => openLightbox(item.image, item.alt || ""));
+        guard.addEventListener("click", () => {
+          // листаем только те работы, что реально показаны и не скрыты фильтром
+          const shown = Array.from(galleryContainer.querySelectorAll('.art-card'))
+            .filter((c) => c.style.display !== 'none' && c.dataset.image);
+          const list = shown.map((c) => ({ image: c.dataset.image, alt: c.dataset.alt || '' }));
+          const at = shown.indexOf(card);
+          setLightboxGroup(list, at < 0 ? 0 : at);
+          openLightbox(item.image, item.alt || "", true);
+        });
+        card.dataset.image = item.image;
+        card.dataset.alt = item.alt || "";
         card.appendChild(guard);
         card.style.cursor = "zoom-in";
       } else {
@@ -852,9 +901,45 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  /* =====================================================================
+   * ПРОСМОТР РАБОТ: листание ← → , клавишами и свайпом, не закрывая окно.
+   * lightboxGroup — список картинок той полосы, из которой открыли просмотр.
+   * ===================================================================== */
+  let lightboxGroup = [];
+  let lightboxIndex = 0;
+
+  function setLightboxGroup(items, index) {
+    lightboxGroup = Array.isArray(items) ? items.filter((it) => it && it.image) : [];
+    lightboxIndex = Math.max(0, index | 0);
+    updateLightboxNav();
+  }
+  function updateLightboxNav() {
+    const prev = document.getElementById('lightboxPrev');
+    const next = document.getElementById('lightboxNext');
+    const counter = document.getElementById('lightboxCounter');
+    const many = lightboxGroup.length > 1;
+    if (prev) prev.hidden = !many;
+    if (next) next.hidden = !many;
+    if (counter) {
+      counter.hidden = !many;
+      if (many) counter.textContent = (lightboxIndex + 1) + ' / ' + lightboxGroup.length;
+    }
+  }
+  function showLightboxAt(index) {
+    if (!lightboxGroup.length) return;
+    // по кругу: с последней — на первую и наоборот
+    lightboxIndex = (index + lightboxGroup.length) % lightboxGroup.length;
+    const it = lightboxGroup[lightboxIndex];
+    if (!it) return;
+    openLightbox(it.image, it.alt || '', true);
+    updateLightboxNav();
+  }
+  function lightboxStep(delta) { showLightboxAt(lightboxIndex + delta); }
+
   // Lightbox: открыть работу в полном размере (с водяным знаком, если включён)
-  function openLightbox(src, alt) {
+  function openLightbox(src, alt, keepGroup) {
     if (!lightbox || !lightboxImage || !src) return;
+    if (!keepGroup) { lightboxGroup = []; lightboxIndex = 0; updateLightboxNav(); }
     lightboxImage.src = src;
     lightboxImage.alt = alt || "";
     if (lightboxWatermark) {
@@ -1212,6 +1297,7 @@ document.addEventListener("DOMContentLoaded", function () {
     populateContactLinkFields();
     populateColleagueField();
     populateWatermarkFields();
+    populateOrdersOpenField();
     populateGhFields();
   }
 
@@ -1303,6 +1389,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (e) { console.warn('save discounts failed', e); }
 
     try { saveWatermarkSettings(); } catch (e) { console.warn('save watermark failed', e); }
+    try { saveOrdersOpen(); } catch (e) { console.warn('save orders status failed', e); }
     try { saveContactLinks(); } catch (e) { console.warn('save contact links failed', e); }
     try { saveColleagueUrl(); } catch (e) { console.warn('save colleague url failed', e); }
 
@@ -1594,12 +1681,49 @@ document.addEventListener("DOMContentLoaded", function () {
       item.appendChild(img);
       const guard = document.createElement('div');
       guard.className = 'commission-guard';
-      guard.addEventListener('click', () => openLightbox(it.image, it.alt || ''));
+      guard.addEventListener('click', () => {
+        setLightboxGroup(imgs, imgs.indexOf(it));
+        openLightbox(it.image, it.alt || '', true);
+      });
       item.appendChild(guard);
       container.appendChild(item);
     });
   }
+  /* =====================================================================
+   * СТАТУС ПРИЁМА ЗАКАЗОВ — первое, что ищет заказчик.
+   * Открыт/закрыт хранится отдельным флажком, подписи и строки про слоты
+   * и «сейчас в работе» — обычные тексты (значит, переводятся на все языки).
+   * ===================================================================== */
+  function isOrdersOpen() {
+    try { return localStorage.getItem('ordersOpen') !== '0'; } catch (e) { return true; }
+  }
+  function renderOrderStatus() {
+    const wrap = document.getElementById('orderStatus');
+    if (!wrap) return;
+    const open = isOrdersOpen();
+    const label = document.getElementById('orderStatusLabel');
+    const badge = document.getElementById('orderStatusBadge');
+    const slotsEl = document.getElementById('orderStatusSlots');
+    const wipEl = document.getElementById('orderStatusWip');
+
+    if (label) label.textContent = getText(open ? 'order_status_open' : 'order_status_closed') || '';
+    if (badge) badge.classList.toggle('is-closed', !open);
+
+    const slots = (getText('order_slots_text') || '').trim();
+    if (slotsEl) {
+      slotsEl.textContent = slots;
+      slotsEl.hidden = !slots;
+    }
+    const wip = (getText('order_wip_text') || '').trim();
+    if (wipEl) {
+      wipEl.textContent = wip;
+      wipEl.hidden = !wip;
+    }
+    wrap.hidden = false;
+  }
+
   function renderSectionImagesPublic() {
+    renderOrderStatus();
     renderSectionImages(document.getElementById('orderGallery'), 'orderImages');
     renderSectionImages(document.getElementById('collabGallery'), 'collabImages');
   }
@@ -2115,7 +2239,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const CONTENT_KEYS = [
     'galleryItems', 'galleryFilters', 'customTexts', 'projects', 'socialLinks',
     'adminHeaderImage', 'adminLeftSidebar', 'adminRightSidebar', 'watermark',
-    'orderImages', 'collabImages', 'contactLinks', 'discounts', 'colleagueUrl',
+    'orderImages', 'collabImages', 'contactLinks', 'discounts', 'colleagueUrl', 'ordersOpen',
   ];
 
   // Собрать весь контент в один объект (строки, как в localStorage)
@@ -2861,6 +2985,16 @@ document.addEventListener("DOMContentLoaded", function () {
     if (adminWatermarkEnabled) adminWatermarkEnabled.checked = wm.enabled;
     if (adminWatermarkText) adminWatermarkText.value = wm.text;
   }
+  // Статус приёма заказов (флажок в админке)
+  const adminOrdersOpen = document.getElementById('adminOrdersOpen');
+  function populateOrdersOpenField() {
+    if (adminOrdersOpen) adminOrdersOpen.checked = isOrdersOpen();
+  }
+  function saveOrdersOpen() {
+    if (!adminOrdersOpen) return;
+    try { localStorage.setItem('ordersOpen', adminOrdersOpen.checked ? '1' : '0'); } catch (e) {}
+  }
+
   function saveWatermarkSettings() {
     const wm = {
       enabled: adminWatermarkEnabled ? adminWatermarkEnabled.checked : false,
@@ -2885,8 +3019,35 @@ document.addEventListener("DOMContentLoaded", function () {
       if (ev.target === lightbox || ev.target.classList.contains("lightbox__stage")) closeLightbox();
     });
   }
+  // Листание работ: кнопки, клавиши ← → и свайп на телефоне
+  const lightboxPrevBtn = document.getElementById('lightboxPrev');
+  const lightboxNextBtn = document.getElementById('lightboxNext');
+  if (lightboxPrevBtn) lightboxPrevBtn.addEventListener('click', (ev) => { ev.stopPropagation(); lightboxStep(-1); });
+  if (lightboxNextBtn) lightboxNextBtn.addEventListener('click', (ev) => { ev.stopPropagation(); lightboxStep(1); });
+
+  if (lightbox) {
+    let touchX = null, touchY = null;
+    lightbox.addEventListener('touchstart', (ev) => {
+      if (ev.touches.length !== 1) { touchX = null; return; }
+      touchX = ev.touches[0].clientX;
+      touchY = ev.touches[0].clientY;
+    }, { passive: true });
+    lightbox.addEventListener('touchend', (ev) => {
+      if (touchX === null || !ev.changedTouches.length) return;
+      const dx = ev.changedTouches[0].clientX - touchX;
+      const dy = ev.changedTouches[0].clientY - touchY;
+      // горизонтальный жест длиннее 50px и явно не вертикальный
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) lightboxStep(dx < 0 ? 1 : -1);
+      touchX = null;
+    }, { passive: true });
+  }
+
   document.addEventListener("keydown", (ev) => {
-    if (ev.key === "Escape" && lightbox && !lightbox.classList.contains("hidden")) closeLightbox();
+    const open = lightbox && !lightbox.classList.contains("hidden");
+    if (!open) return;
+    if (ev.key === "Escape") { closeLightbox(); return; }
+    if (ev.key === "ArrowLeft") { ev.preventDefault(); lightboxStep(-1); }
+    if (ev.key === "ArrowRight") { ev.preventDefault(); lightboxStep(1); }
   });
 
   // Тема
@@ -3156,6 +3317,89 @@ document.addEventListener("DOMContentLoaded", function () {
     adminDirtyDone.addEventListener('click', markContentPublished);
   }
 
+  /* =====================================================================
+   * КНОПКА «ПОДЕЛИТЬСЯ»
+   * На телефоне открывает системное меню «Поделиться», на компьютере
+   * просто копирует ссылку на сайт в буфер обмена.
+   * ===================================================================== */
+  const shareBtn = document.getElementById('shareBtn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+      const url = location.href.split('?')[0].split('#')[0];
+      const title = getText('hero_title') || 'Podvalnia_alebarda';
+      const flash = () => {
+        const original = getText('share_btn') || 'Поделиться';
+        shareBtn.textContent = getText('share_done') || 'Ссылка скопирована!';
+        shareBtn.classList.add('is-done');
+        setTimeout(() => {
+          shareBtn.textContent = original;
+          shareBtn.classList.remove('is-done');
+        }, 2000);
+      };
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text: getText('hero_subtitle') || '', url });
+          return;
+        } catch (e) { /* пользователь закрыл меню — просто копируем */ }
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(flash).catch(() => fallbackCopyText(url, flash));
+      } else {
+        fallbackCopyText(url, flash);
+      }
+    });
+  }
+
+  /* =====================================================================
+   * ПЛАВНОЕ ПОЯВЛЕНИЕ БЛОКОВ ПРИ ПРОКРУТКЕ
+   * Дёшево: один наблюдатель, класс навешивается один раз и наблюдение
+   * снимается — на прокрутке ничего не считается, тормозов не будет.
+   * Если у человека включено «уменьшить движение» — эффект не применяем.
+   * ===================================================================== */
+  (function initScrollReveal() {
+    let reduced = false;
+    try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    if (reduced || !('IntersectionObserver' in window)) return;
+    const targets = document.querySelectorAll('.info-section, .site-footer .footer-shell');
+    if (!targets.length) return;
+    targets.forEach((el) => el.classList.add('reveal'));
+    const reveal = (el) => { el.classList.add('is-visible'); obs.unobserve(el); };
+    // threshold 0 + запас 150px: срабатывает чуть раньше, чем блок доедет до экрана
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => { if (entry.isIntersecting) reveal(entry.target); });
+    }, { rootMargin: '150px 0px 150px 0px', threshold: 0 });
+    targets.forEach((el) => obs.observe(el));
+
+    // Страховка от «перепрыгивания»: если нажать кнопку навигации, страница
+    // мгновенно перескакивает через блоки, и наблюдатель их не замечает — они
+    // остались бы невидимыми. Поэтому дополнительно проверяем при прокрутке:
+    // всё, что уже проехали, показываем. Проверка снимается, как только все
+    // блоки раскрыты, так что на прокрутку это не влияет.
+    let remaining = Array.prototype.slice.call(targets);
+    let scheduled = false;
+    const sweep = () => {
+      scheduled = false;
+      remaining = remaining.filter((el) => {
+        if (el.classList.contains('is-visible')) return false;
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight + 150) { reveal(el); return false; }
+        return true;
+      });
+      if (!remaining.length) {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onScroll);
+      }
+    };
+    const onScroll = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(sweep);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    setTimeout(sweep, 1200); // и один раз после загрузки — на случай коротких страниц
+  })();
+
   // «Забыли пароль?» — показать инструкцию по сбросу
   const passwordForgot = document.getElementById('passwordForgot');
   const passwordHint = document.getElementById('passwordHint');
@@ -3200,7 +3444,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Чистим именно контентные ключи (без паролей/ключей-настроек).
       ['galleryItems','galleryFilters','customTexts','projects','socialLinks',
        'adminHeaderImage','adminLeftSidebar','adminRightSidebar','watermark',
-       'orderImages','collabImages','contactLinks','discounts','colleagueUrl'].forEach((k) => localStorage.removeItem(k));
+       'orderImages','collabImages','contactLinks','discounts','colleagueUrl','ordersOpen'].forEach((k) => localStorage.removeItem(k));
       // Возвращаем картинки по умолчанию (как в исходном index.html)
       if (heroBgImage) heroBgImage.src = 'IMG_1858.PNG';
       if (leftSidebarImage) leftSidebarImage.src = 'Полосы.JPG';

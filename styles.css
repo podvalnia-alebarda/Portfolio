@@ -3046,3 +3046,159 @@ main {
   cursor: pointer;
 }
 .password-hint__copy:hover { background: var(--c-brick); }
+
+/* =====================================================================
+ * Статус приёма заказов
+ * ===================================================================== */
+.order-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+.order-status[hidden] { display: none; }
+.order-status__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  background: #2e7d32;
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  box-shadow: 0 8px 22px rgba(46, 125, 50, 0.28);
+}
+.order-status__badge.is-closed {
+  background: #6f6257;
+  box-shadow: 0 8px 22px rgba(111, 98, 87, 0.28);
+}
+.order-status__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #b9f6ca;
+  box-shadow: 0 0 0 0 rgba(185, 246, 202, 0.7);
+  animation: orderPulse 2.4s var(--ease) infinite;
+}
+.order-status__badge.is-closed .order-status__dot {
+  background: #d9d2cb;
+  animation: none;
+}
+@keyframes orderPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(185, 246, 202, 0.65); }
+  70%  { box-shadow: 0 0 0 9px rgba(185, 246, 202, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(185, 246, 202, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .order-status__dot { animation: none; }
+}
+.order-status__slots,
+.order-status__wip {
+  font-size: 0.95rem;
+  color: var(--text-soft);
+  text-align: center;
+}
+.order-status__wip { font-family: var(--font-hand); font-size: 1.15rem; }
+.order-status__slots[hidden], .order-status__wip[hidden] { display: none; }
+
+/* =====================================================================
+ * Листание работ в просмотре
+ * ===================================================================== */
+.lightbox__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(30, 20, 10, 0.55);
+  color: #fff;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+  transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.lightbox__nav:hover { background: rgba(30, 20, 10, 0.8); }
+.lightbox__nav:active { transform: translateY(-50%) scale(0.94); }
+.lightbox__nav[hidden] { display: none; }
+.lightbox__nav--prev { left: 16px; }
+.lightbox__nav--next { right: 16px; }
+.lightbox__counter {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(30, 20, 10, 0.55);
+  color: #fff;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  z-index: 3;
+}
+.lightbox__counter[hidden] { display: none; }
+@media (max-width: 640px) {
+  .lightbox__nav { width: 44px; height: 44px; font-size: 1.6rem; }
+  .lightbox__nav--prev { left: 6px; }
+  .lightbox__nav--next { right: 6px; }
+}
+
+/* =====================================================================
+ * Кнопка «Поделиться»
+ * ===================================================================== */
+.share-button {
+  margin: 14px auto 0;
+  display: block;
+  padding: 10px 22px;
+  border: 2px solid currentColor;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.share-button:hover { background: currentColor; }
+.share-button:hover > * { color: var(--bg); }
+.share-button.is-done {
+  border-color: #2e7d32;
+  background: #2e7d32;
+  color: #fff;
+}
+
+/* =====================================================================
+ * Плавное появление секций при прокрутке
+ * ===================================================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* Флажок в админке */
+.admin-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.admin-checkbox input { width: 18px; height: 18px; cursor: pointer; }
