@@ -28,15 +28,15 @@
 [data-theme="light"] {
   color-scheme: light;
   --c-brown: #513215;
-  --c-brick: #a13808;
-  --c-orange: #e98e0c;
-  --c-amber: #f0bb51;
+  --c-brick: #bd3d10;
+  --c-orange: #f2900a;
+  --c-amber: #f7c53d;
 
   --bg: var(--c-amber);
   --surface: var(--c-orange);
   --surface-strong: var(--c-brick);
   --accent: var(--c-brown);
-  --accent-soft: #f4cd7e;
+  --accent-soft: #f9d675;
   --text: #3b2613;
   --text-soft: #6b4e30;
   --shadow: 0 24px 80px rgba(81, 50, 21, 0.24);
@@ -45,22 +45,24 @@
   --card-bg: rgba(255, 244, 222, 0.82);
   --card-border: rgba(255, 255, 255, 0.5);
   --glass-blur: 16px;
-  /* Та же гамма, но мягче (меньше насыщенность, теплее) — не режет глаза. */
+  /* Насыщенность подтянута к прайс-листу и аватарке: бледное золото сверху →
+     тёплый оранжевый → кирпичный снизу. Верх намеренно светлее и спокойнее —
+     насыщенность нарастает книзу, поэтому фон сочный, но не режет глаза. */
   --page-bg: linear-gradient(180deg,
-    #f7d6a6 0%,
-    #ecbc63 18%,
-    #e3a648 48%,
-    #d6862f 76%,
-    #bb5e21 100%);
+    #fbe3a8 0%,
+    #f6c85a 18%,
+    #f0a838 48%,
+    #e07a24 76%,
+    #c14a16 100%);
   /* Жёлтые пилюли-фильтров (активный фильтр) — светлые и жёлтые */
-  --filter-bg: #fbe7a8;
-  --filter-bg-hover: #fff0bd;
+  --filter-bg: #fdea99;
+  --filter-bg-hover: #fff4b4;
   --field-bg: #fff7ea;
   --field-border: rgba(112, 76, 34, 0.2);
   --ring: rgba(233, 142, 12, 0.55);
   /* Цвет кнопок навигации (его же получают неактивные фильтры) */
-  --nav-bg: rgba(161, 56, 8, 0.96);
-  --nav-bg-hover: rgba(187, 70, 16, 1);
+  --nav-bg: rgba(189, 61, 16, 0.96);
+  --nav-bg-hover: rgba(212, 77, 22, 1);
 }
 
 /* ===== Тёмная тема ===== ТОЧНО по файлу "темная тема.jpg":
@@ -131,20 +133,21 @@ body {
   transition: background var(--t-med) var(--ease), color var(--t-med) var(--ease);
 }
 
-/* Декоративные оранжевые «реки» поверх градиента-подложки (за карточками текста).
-   Зафиксированы во вьюпорте, полупрозрачные — заметные, но не мешают чтению. */
+/* Фоновый узор в стиле прайс-листа автора: тетрадная клетка, волнистые тёплые
+   ленты и золотые звёзды со «сверкашками». Зафиксирован во вьюпорте, почти без
+   размытия — рисунок читается, но остаётся фоном и не мешает тексту. */
 body::before {
   content: "";
   position: fixed;
   inset: -14px; /* чуть больше вьюпорта — у размытия нет резких краёв */
   z-index: 0;
   pointer-events: none;
-  background: url("rivers.svg") center center / cover no-repeat;
-  opacity: 0.38;
-  filter: blur(6px);
+  background: url("pattern.svg") center center / cover no-repeat;
+  opacity: 0.62;
+  filter: blur(0.4px);
 }
 [data-theme="dark"] body::before {
-  opacity: 0.32;
+  opacity: 0.26;
 }
 
 /* Заголовки — display-шрифт */
@@ -338,7 +341,7 @@ html {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(65, 30, 16, 0.94), rgba(90, 38, 15, 0.55) 48%, rgba(233, 192, 138, 0.08) 100%);
+  background: linear-gradient(180deg, rgba(112, 42, 12, 0.90), rgba(150, 62, 16, 0.68) 48%, rgba(193, 74, 22, 0.42) 100%);
   z-index: 2;
   pointer-events: none;
 }
@@ -349,6 +352,18 @@ html {
   object-fit: cover;
   display: block;
   z-index: 1;
+  /* Скетчи по бокам серые — подкрашиваем их в тёплый тон, чтобы они читались
+     как фактура в общей гамме, а не как отдельная серая картинка. */
+  filter: sepia(0.55) saturate(1.45) hue-rotate(-8deg) contrast(0.95);
+}
+
+/* В тёмной теме бока должны оставаться глубокими, иначе они светятся
+   ярче самого контента. */
+[data-theme="dark"] .side-panel::before {
+  background: linear-gradient(180deg, rgba(18, 10, 3, 0.95), rgba(36, 19, 7, 0.88) 48%, rgba(58, 29, 10, 0.82) 100%);
+}
+[data-theme="dark"] .side-panel-image {
+  filter: sepia(0.5) saturate(1.15) brightness(0.68) contrast(0.95);
 }
 
 .side-panel--left {
@@ -3064,32 +3079,33 @@ main {
   gap: 10px;
   padding: 10px 20px;
   border-radius: var(--radius-pill);
-  background: #2e7d32;
-  color: #fff;
+  background: linear-gradient(135deg, #f7c53d 0%, #f2900a 100%);
+  color: #4a2a0c;
   font-weight: 700;
   font-size: clamp(0.95rem, 1.6vw, 1.1rem);
-  box-shadow: 0 8px 22px rgba(46, 125, 50, 0.28);
+  box-shadow: 0 8px 22px rgba(189, 61, 16, 0.28);
 }
 .order-status__badge.is-closed {
-  background: #6f6257;
-  box-shadow: 0 8px 22px rgba(111, 98, 87, 0.28);
+  background: linear-gradient(135deg, #8a7361 0%, #6d5849 100%);
+  color: #fdf3e4;
+  box-shadow: 0 8px 22px rgba(90, 70, 55, 0.26);
 }
 .order-status__dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #b9f6ca;
-  box-shadow: 0 0 0 0 rgba(185, 246, 202, 0.7);
+  background: #bd3d10;
+  box-shadow: 0 0 0 0 rgba(189, 61, 16, 0.7);
   animation: orderPulse 2.4s var(--ease) infinite;
 }
 .order-status__badge.is-closed .order-status__dot {
-  background: #d9d2cb;
+  background: #e6dbcd;
   animation: none;
 }
 @keyframes orderPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(185, 246, 202, 0.65); }
-  70%  { box-shadow: 0 0 0 9px rgba(185, 246, 202, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(185, 246, 202, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(189, 61, 16, 0.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(189, 61, 16, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(189, 61, 16, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .order-status__dot { animation: none; }
@@ -3170,9 +3186,9 @@ main {
 .share-button:hover { background: currentColor; }
 .share-button:hover > * { color: var(--bg); }
 .share-button.is-done {
-  border-color: #2e7d32;
-  background: #2e7d32;
-  color: #fff;
+  border-color: #bd3d10;
+  background: #bd3d10;
+  color: #fff8ec;
 }
 
 /* =====================================================================

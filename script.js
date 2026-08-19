@@ -2370,39 +2370,75 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 
     setPublishStatus('Публикую…', 'info');
-    try {
-      // 1) узнаём текущий SHA файла (если он уже есть)
-      let sha = undefined;
-      const getRes = await fetch(`${apiBase}?ref=${encodeURIComponent(branch)}`, { headers });
-      if (getRes.status === 200) {
-        const cur = await getRes.json();
-        sha = cur.sha;
-      } else if (getRes.status === 401) {
-        setPublishStatus('Неверный токен (401). Проверьте токен и его права.', 'error');
-        return;
-      } else if (getRes.status === 404) {
-        // файла ещё нет или репозиторий/ветка не найдены — попробуем создать
-        sha = undefined;
+
+    // Свежий SHA файла. ВАЖНО: cache:'no-store' и уникальный параметр в адресе —
+    // без них браузер может отдать сохранённый ответ со СТАРЫМ sha, и GitHub
+    // отвечает «409: does not match ...». Именно из-за этого публикация падала.
+    async function fetchCurrentSha() {
+      const bust = Date.now() + '-' + Math.random().toString(36).slice(2);
+      const res = await fetch(
+        `${apiBase}?ref=${encodeURIComponent(branch)}&_=${bust}`,
+        { headers, cache: 'no-store' }
+      );
+      if (res.status === 200) {
+        const cur = await res.json();
+        return { sha: cur.sha, status: 200 };
       }
-      // 2) PUT — создаём/обновляем файл
-      const body = {
-        message: 'Обновление контента сайта через админку',
-        content: utf8ToBase64(payload),
-        branch,
-      };
-      if (sha) body.sha = sha;
-      const putRes = await fetch(apiBase, { method: 'PUT', headers, body: JSON.stringify(body) });
-      if (putRes.ok) {
-        setPublishStatus('Опубликовано! Сайт обновится у всех за 1–2 минуты.', 'success');
-        markContentPublished();
-      } else {
+      return { sha: undefined, status: res.status };
+    }
+
+    const MAX_TRIES = 3;
+    try {
+      for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
+        const cur = await fetchCurrentSha();
+        if (cur.status === 401) {
+          setPublishStatus('Токен не принят (401). Проверьте, что он скопирован целиком и не истёк.', 'error');
+          return;
+        }
+        if (cur.status === 403) {
+          setPublishStatus('Нет доступа (403). У токена должно быть право Contents: Read and write для этого репозитория.', 'error');
+          return;
+        }
+        // 404 — файла ещё нет, создадим (sha не нужен)
+
+        const body = {
+          message: 'Обновление контента сайта через админку',
+          content: utf8ToBase64(payload),
+          branch,
+        };
+        if (cur.sha) body.sha = cur.sha;
+
+        const putRes = await fetch(apiBase, {
+          method: 'PUT', headers, body: JSON.stringify(body), cache: 'no-store',
+        });
+        if (putRes.ok) {
+          setPublishStatus('Опубликовано! Сайт обновится у всех за 1–2 минуты.', 'success');
+          markContentPublished();
+          return;
+        }
+
+        // 409/422 — файл на GitHub изменился между чтением и записью
+        // (или GitHub отдал устаревшие данные). Берём свежий sha и пробуем снова.
+        if ((putRes.status === 409 || putRes.status === 422) && attempt < MAX_TRIES) {
+          setPublishStatus(`Файл на GitHub только что менялся — пробую ещё раз (${attempt} из ${MAX_TRIES - 1})…`, 'info');
+          await new Promise((r) => setTimeout(r, 1500 * attempt));
+          continue;
+        }
+
         const err = await putRes.json().catch(() => ({}));
-        setPublishStatus('Ошибка GitHub (' + putRes.status + '): ' + (err.message || 'см. консоль'), 'error');
+        if (putRes.status === 409 || putRes.status === 422) {
+          setPublishStatus('GitHub пока отдаёт устаревшие данные о файле. Подождите минуту и нажмите «Опубликовать сейчас» ещё раз — контент никуда не делся.', 'error');
+        } else if (putRes.status === 404) {
+          setPublishStatus('Репозиторий или ветка не найдены (404). Проверьте владельца, название репозитория и ветку.', 'error');
+        } else {
+          setPublishStatus('Ошибка GitHub (' + putRes.status + '): ' + (err.message || 'подробности в консоли'), 'error');
+        }
         console.warn('GitHub publish error', putRes.status, err);
+        return;
       }
     } catch (e) {
       console.warn('publish failed', e);
-      setPublishStatus('Сбой сети при публикации.', 'error');
+      setPublishStatus('Не удалось связаться с GitHub. Проверьте интернет и попробуйте ещё раз.', 'error');
     }
   }
 
